@@ -11,20 +11,20 @@ from ..helper.telegram_helper.bot_commands import BotCommands
 async def start(_, message):
     buttons = ButtonMaker()
     buttons.url_button(
-        "Repo", "https://www.github.com/anasty17/mirror-leech-telegram-bot"
+        "👻LeechChatGroup", "https://t.me/MirrorLeecher"
     )
-    buttons.url_button("Code Owner", "https://t.me/anas_tayyar")
+    buttons.url_button("🍁Owner", "https://t.me/BhardwajBhavit")
     reply_markup = buttons.build_menu(2)
     if await CustomFilters.authorized(_, message):
         start_string = f"""
-This bot can mirror from links|tgfiles|torrents|nzb|rclone-cloud to any rclone cloud, Google Drive or to telegram.
-Type /{BotCommands.HelpCommand} to get a list of available commands
+🌻✨This bot can Mirror or Leech⚜ from Links/TGfiles/Torrents/nzb/Rclone-cloud to any Rclone cloud,🤞 Google Drive or to Telegram✨🌻.\n\n
+💢⚡Type /{BotCommands.HelpCommand} to get a list of available commands🤞
 """
         await send_message(message, start_string, reply_markup)
     else:
         await send_message(
             message,
-            "This bot can mirror from links|tgfiles|torrents|nzb|rclone-cloud to any rclone cloud, Google Drive or to telegram.\n\n⚠️ You Are not authorized user! Deploy your own mirror-leech bot",
+            "🌻✨This bot can Mirror or Leech⚜ from Links/TGfiles/Torrents/nzb/Rclone-cloud to any Rclone cloud,🤞 Google Drive or to Telegram✨🌻.\n\n❗⚠️ You Are not authorized user❗ 🌩Please Use https://t.me/MirrorLeecher ♻🌻",
             reply_markup,
         )
 
