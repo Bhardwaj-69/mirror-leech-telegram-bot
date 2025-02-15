@@ -50,8 +50,8 @@ async def _on_download_started(api, data):
         task.listener.name = aria2_name(download)
         msg, button = await stop_duplicate_check(task.listener)
         if msg:
+            await TorrentManager.aria2_remove(download)
             await task.listener.on_download_error(msg, button)
-            await api.forceRemove(gid)
 
 
 async def _on_download_complete(api, data):
@@ -81,17 +81,17 @@ async def _on_download_complete(api, data):
                 LOGGER.info(
                     f"Cancelling Seed: {aria2_name(download)} onDownloadComplete"
                 )
+                await TorrentManager.aria2_remove(download)
                 await task.listener.on_upload_error(
                     f"Seeding stopped with Ratio: {task.ratio()} and Time: {task.seeding_time()}"
                 )
-                await api.forceRemove(gid)
     else:
         LOGGER.info(f"onDownloadComplete: {aria2_name(download)} - Gid: {gid}")
         if task := await get_task_by_gid(gid):
             await task.listener.on_download_complete()
             if intervals["stopAll"]:
                 return
-            await api.forceRemove(gid)
+            await TorrentManager.aria2_remove(download)
 
 
 async def _on_bt_download_complete(api, data):
@@ -112,7 +112,7 @@ async def _on_bt_download_complete(api, data):
                         await remove(f_path)
                     except:
                         pass
-            await clean_unwanted(download.dir)
+            await clean_unwanted(download.get("dir", ""))
         if task.listener.seed:
             try:
                 await api.changeOption(gid, {"max-upload-limit": "0"})
@@ -134,11 +134,11 @@ async def _on_bt_download_complete(api, data):
             and download.get("status", "") == "complete"
             and await get_task_by_gid(gid)
         ):
-            LOGGER.info(f"Cancelling Seed: {download.name}")
+            LOGGER.info(f"Cancelling Seed: {aria2_name(download)}")
+            await TorrentManager.aria2_remove(download)
             await task.listener.on_upload_error(
                 f"Seeding stopped with Ratio: {task.ratio()} and Time: {task.seeding_time()}"
             )
-            await api.forceRemove(gid)
         elif (
             task.listener.seed
             and download.get("status", "") == "complete"
@@ -148,14 +148,14 @@ async def _on_bt_download_complete(api, data):
         elif task.listener.seed and not task.listener.is_cancelled:
             async with task_dict_lock:
                 if task.listener.mid not in task_dict:
-                    await api.forceRemove(gid)
+                    await TorrentManager.aria2_remove(download)
                     return
                 task_dict[task.listener.mid] = Aria2Status(task.listener, gid, True)
                 task_dict[task.listener.mid].start_time = time()
             LOGGER.info(f"Seeding started: {aria2_name(download)} - Gid: {gid}")
             await update_status_message(task.listener.message.chat.id)
         else:
-            await api.forceRemove(gid)
+            await TorrentManager.aria2_remove(download)
 
 
 async def _on_download_stopped(_, data):
@@ -173,12 +173,12 @@ async def _on_download_error(api, data):
     try:
         download = await api.tellStatus(gid)
         options = await api.getOption(gid)
-        if options.get("follow-torrent", "") == "false":
-            return
         error = download.get("errorMessage", "")
         LOGGER.info(f"Download Error: {error}")
     except:
         pass
+    if options.get("follow-torrent", "") == "false":
+        return
     if task := await get_task_by_gid(gid):
         await task.listener.on_download_error(error)
 
